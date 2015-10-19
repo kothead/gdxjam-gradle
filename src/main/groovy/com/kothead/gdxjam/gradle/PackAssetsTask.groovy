@@ -20,7 +20,7 @@ class PackAssetsTask extends DefaultTask {
     File outputDir
     
     @Input
-    Settings settings = configure(new Settings()) {
+    Settings settings = project.configure(new Settings()) {
         maxWidth = 2048
         maxHeight = 2048
         edgePadding = true
