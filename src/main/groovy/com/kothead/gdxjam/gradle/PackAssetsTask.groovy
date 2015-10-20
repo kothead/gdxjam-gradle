@@ -52,13 +52,13 @@ class PackAssetsTask extends DefaultTask {
         }
     }
     
-    private boolean hasOutdatedFile(File directory, List outdated) {
+    boolean hasOutdatedFile(File directory, List outdated) {
         directory.listFiles().find {
             it.getName() in outdated
         }
     }
 
-    private boolean hasRemovedFile(File directory, List removed) {
+    boolean hasRemovedFile(File directory, List removed) {
         removed.find {
             def path = it.substring(0, it.lastIndexOf(File.pathSeparatorChar))
             path == directory.getPath()
