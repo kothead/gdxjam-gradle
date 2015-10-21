@@ -1,7 +1,8 @@
 package com.kothead.gdxjam.gradle
 
-import org.junit.Test
+import java.io.File
 
+import org.junit.Test
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.api.Project
 
@@ -18,9 +19,9 @@ class PackAssetsTaskTest {
         task.outputDir = project.file("output")
         task.execute()
 
-        boolean noBatch = inputDir.listFiles().find {
-            (project.file(outputDir, it + ".atlas").exists()
-            && project.file(outputDir, it + ".png").exists())
+        boolean noBatch = task.inputDir.listFiles().find {
+            !(new File(task.outputDir, it.getName() + ".atlas").exists()
+            && new File(task.outputDir, it.getName() + ".png").exists())
         } 
         assertFalse(noBatch)
     }
