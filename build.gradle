@@ -1,4 +1,15 @@
 apply plugin: 'groovy'
+apply plugin: 'maven'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.badlogicgames.gdx:gdx-tools:latest.release'
+    }
+}
 
 repositories {
     mavenCentral()
@@ -7,5 +18,16 @@ repositories {
 dependencies {
     compile gradleApi()
     compile localGroovy()
-    compile "com.badlogicgames.gdx:gdx-tools:latest.release"
+    compile 'com.badlogicgames.gdx:gdx-tools:latest.release'
+}
+
+group = 'com.kothead.gdxjam.gradle'
+version = '1.0-SNAPSHOT'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri('repo'))
+        }
+    }
 }

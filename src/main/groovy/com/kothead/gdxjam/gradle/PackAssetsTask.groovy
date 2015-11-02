@@ -13,21 +13,14 @@ import org.gradle.api.tasks.TaskAction
 
 class PackAssetsTask extends DefaultTask {
     @InputDirectory
-    def File inputDir 
+    File inputDir = new File('input')
 
     @OutputDirectory
-    def File outputDir
+    File outputDir = new File('output')
     
     @Input
-    def Settings settings = project.configure(new Settings()) {
-        maxWidth = 2048
-        maxHeight = 2048
-        edgePadding = true
-        duplicatePadding = true
-        paddingX = 4
-        paddingY = 4
-    }
-    
+    Settings settings = new Settings()
+
     @TaskAction
     def pack(IncrementalTaskInputs inputs) {
         def type = inputs.incremental ? "CHANGED" : "ALL"
@@ -61,7 +54,7 @@ class PackAssetsTask extends DefaultTask {
 
     boolean hasRemovedFile(File directory, List removed) {
         removed.find {
-            def path = it.substring(0, it.lastIndexOf(File.pathSeparatorChar))
+            def path = it.substring(0, it.lastIndexOf(File.separator))
             path == directory.getPath()
         }
     }
