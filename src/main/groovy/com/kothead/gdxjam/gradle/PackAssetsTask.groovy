@@ -42,7 +42,7 @@ class PackAssetsTask extends DefaultTask {
             if (hasRemoved) println "${it.getName()} has removed files"
             it.isDirectory() && (hasOutdated || hasRemoved)
         }.collect {
-            TexturePacker.process(settings, it.path, outputDir.path, it.name)
+            TexturePacker.process(settings.build(), it.path, outputDir.path, it.name)
         }
     }
     

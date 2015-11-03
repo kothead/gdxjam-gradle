@@ -19,7 +19,8 @@ import static org.junit.Assert.*
 class PackAssetsTaskTest {
 
     ProjectConnection connection
-    BuildLauncher launcher
+    BuildLauncher cleanLauncher
+    BuildLauncher packLauncher 
     File inputDir 
     File outputDir
     ByteArrayOutputStream stdout 
@@ -35,14 +36,20 @@ class PackAssetsTaskTest {
         GradleConnector connector = GradleConnector.newConnector()
         connector.forProjectDirectory(projectDir)
         connection = connector.connect()
-        launcher = connection.newBuild()
-        launcher.setStandardOutput(stdout)
-        launcher.forTasks("packAssets")
+
+        cleanLauncher = connection.newBuild()
+        cleanLauncher.setStandardOutput(stdout)
+        cleanLauncher.forTasks("cleanPackAssets")
+        cleanLauncher.run()
+
+        packLauncher = connection.newBuild()
+        packLauncher.setStandardOutput(stdout)
+        packLauncher.forTasks("packAssets")
     }
 
     @Test
     void packAssetsIntoBatches() {
-        launcher.run()
+        packLauncher.run()
 
         boolean noBatch = inputDir.listFiles().find {
             !(new File(outputDir, it.name + ".atlas").exists()
@@ -57,11 +64,11 @@ class PackAssetsTaskTest {
         def to = new File(inputDir, "batch1/copy.png")
         to << from.bytes 
 
-        launcher.run()
+        packLauncher.run()
         assertTrue('copy' in parseSprites("batch1.atlas"))
 
         to.delete()
-        launcher.run()
+        packLauncher.run()
         assertFalse('copy' in parseSprites("batch1.atlas"))
     }
 

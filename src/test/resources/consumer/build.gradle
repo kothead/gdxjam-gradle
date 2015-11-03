@@ -8,11 +8,12 @@ buildscript {
 
     dependencies {
         classpath group: 'com.kothead.gdxjam.gradle', name: 'gdxjam-gradle', version: '1.0-SNAPSHOT' 
-        classpath "com.badlogicgames.gdx:gdx-tools:latest.release"
+        classpath 'com.badlogicgames.gdx:gdx-tools:latest.release'
     }
 }
 
-apply plugin: "gdxjam"
+apply plugin: 'gdxjam'
+apply plugin: 'java'
 
 packAssets {
     inputDir = file('../input')
