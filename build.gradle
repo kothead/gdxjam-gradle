@@ -19,6 +19,8 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
     compile 'com.badlogicgames.gdx:gdx-tools:latest.release'
+
+    testCompile 'junit:junit:4.12'
 }
 
 group = 'com.kothead.gdxjam.gradle'
