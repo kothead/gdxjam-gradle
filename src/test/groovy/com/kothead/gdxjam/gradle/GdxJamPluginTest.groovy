@@ -4,15 +4,18 @@ import org.junit.Test
 
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.api.Project
+import spock.lang.Specification
 
-import static org.junit.Assert.*
+class GdxJamPluginTest extends Specification {
+    
+    def "gdxjam tasks are available"() {
+        given:
+            Project project = ProjectBuilder.builder().build()
 
-class GdxJamPluginTest {
-    @Test
-    public void gdxJamPluginAddsPackAssetsTaskToProject() {
-        Project project = ProjectBuilder.builder().build()
-        project.pluginManager.apply 'gdxjam'
+        when: 
+            project.pluginManager.apply "gdxjam"
 
-        assertTrue(project.tasks.packAssets instanceof PackAssetsTask)
+        then:
+            project.tasks.packAssets instanceof PackAssetsTask
     }
 }

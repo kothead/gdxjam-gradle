@@ -1,88 +1,60 @@
 package com.kothead.gdxjam.gradle
 
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.nio.charset.Charset
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import org.gradle.testkit.runner.GradleRunner
+import spock.lang.Specification
 
-import org.junit.Test
-import org.junit.Before
-import org.junit.After
+import static org.gradle.testkit.runner.TaskOutcome.*
 
-import org.gradle.tooling.BuildLauncher
-import org.gradle.tooling.GradleConnector
-import org.gradle.tooling.ProjectConnection
-import org.gradle.tooling.model.GradleProject
-import org.gradle.tooling.model.GradleTask
+class PackAssetsTaskTest extends Specification {
 
-import static org.junit.Assert.*
-
-class PackAssetsTaskTest {
-
-    ProjectConnection connection
-    BuildLauncher cleanLauncher
-    BuildLauncher packLauncher 
+    @Rule TemporaryFolder projectDir = new TemporaryFolder()
+    File buildFile
     File inputDir 
     File outputDir
-    ByteArrayOutputStream stdout 
 
-    @Before
-    void connectToProject() {
+    def setup() {
+        buildFile = projectDir.newFile("build.gradle")
+        outputDir = projectDir.newFolder("output")
+
         ClassLoader loader = getClass().classLoader
-        def projectDir = new File(loader.getResource("consumer").getFile()) 
         inputDir = new File(loader.getResource("input").getFile())
-        outputDir = new File(projectDir, "output")
-        stdout = new ByteArrayOutputStream()
-
-        GradleConnector connector = GradleConnector.newConnector()
-        connector.forProjectDirectory(projectDir)
-        connection = connector.connect()
-
-        cleanLauncher = connection.newBuild()
-        cleanLauncher.setStandardOutput(stdout)
-        cleanLauncher.forTasks("cleanPackAssets")
-        cleanLauncher.run()
-
-        packLauncher = connection.newBuild()
-        packLauncher.setStandardOutput(stdout)
-        packLauncher.forTasks("packAssets")
     }
 
-    @Test
-    void packAssetsIntoBatches() {
-        packLauncher.run()
+    def "pack assets into batches"() {
+        given:
+            buildFile << """
+                plugins {
+                    id "gdxjam"
+                }
 
-        boolean noBatch = inputDir.listFiles().find {
-            !(new File(outputDir, it.name + ".atlas").exists()
-            && new File(outputDir, it.name + ".png").exists())
-        }
-        assertFalse(noBatch)
-    }
+                packAssets {
+                    inputDir = file('$inputDir.absolutePath')
+                    outputDir = file('$outputDir.absolutePath')
+                }
+            """
 
-    @Test
-    void repacksAssetsAfterFileRemove() {
-        def from = new File(inputDir, "batch1/pic1.png")
-        def to = new File(inputDir, "batch1/copy.png")
-        to << from.bytes 
+        when:
+            def result = GradleRunner.create()
+                .withProjectDir(projectDir.root)
+                .withArguments("packAssets")
+                .withPluginClasspath()
+                .build()
 
-        packLauncher.run()
-        assertTrue('copy' in parseSprites("batch1.atlas"))
-
-        to.delete()
-        packLauncher.run()
-        assertFalse('copy' in parseSprites("batch1.atlas"))
+        then:
+            result.task(":packAssets").outcome == SUCCESS
+            inputDir.listFiles().find {
+                new File(outputDir, it.name + ".atlas").exists() ||
+                new File(outputDir, it.name + ".png").exists()
+            }
     }
 
     List parseSprites(String name) {
         def list = new File(outputDir, name).readLines()[2..-1].findAll {
-            it.length() > 0 && !it.contains(':')
+            it.length() > 0 && !it.contains(":")
         }
         list.collect { println "batch $name contains " + it }
         return list
-    }
-
-    @After
-    void disconnectFromProject() {
-        connection.close()
-        println "task output: ${stdout.toString()}"
     }
 }
