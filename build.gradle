@@ -1,15 +1,7 @@
-apply plugin: 'groovy'
-apply plugin: 'maven'
-apply plugin: 'java-gradle-plugin'
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.badlogicgames.gdx:gdx-tools:latest.release'
-    }
+plugins {
+    id 'groovy'
+    id 'maven'
+    id 'java-gradle-plugin'
 }
 
 repositories {
@@ -20,14 +12,12 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
     compile 'com.badlogicgames.gdx:gdx-tools:latest.release'
+    compile('com.squareup:javapoet:1.9.+')
 
     testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
         exclude group: 'org.codehaus.groovy', module: 'groovy-all'
     }
 }
-
-group = 'com.kothead.gdxjam.gradle'
-version = '1.0-SNAPSHOT'
 
 uploadArchives {
     repositories {

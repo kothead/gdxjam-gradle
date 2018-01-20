@@ -1,7 +1,5 @@
 package com.kothead.gdxjam.gradle
 
-import org.junit.Test
-
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.api.Project
 import spock.lang.Specification
@@ -17,5 +15,6 @@ class GdxJamPluginTest extends Specification {
 
         then:
             project.tasks.packAssets instanceof PackAssetsTask
+            project.tasks.gatherAssets instanceof GatherAssetsTask
     }
 }

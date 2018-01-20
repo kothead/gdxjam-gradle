@@ -70,3 +70,4 @@ class Settings implements Serializable {
         return settings
     }
 }
+
