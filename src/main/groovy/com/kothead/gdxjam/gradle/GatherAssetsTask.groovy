@@ -1,10 +1,15 @@
 package com.kothead.gdxjam.gradle
 
 import com.badlogic.gdx.tools.texturepacker.TexturePacker
+import com.badlogic.gdx.assets.AssetDescriptor
+
+import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.JavaFile
+import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeSpec
+import com.squareup.javapoet.TypeName
 
 import groovy.io.FileType
 import groovy.util.FileNameFinder
@@ -51,7 +56,7 @@ class GatherAssetsTask extends DefaultTask {
             merge(tree, collectAssetTree(it, inputDir, files))
         }
         
-        TypeSpec spec = generateAssetsType(assetsClass, tree)
+        def (TypeSpec spec) = generateAssetsType(assetsClass, tree)
         JavaFile file = JavaFile.builder(assetsPackage, spec).build() 
         file.writeTo(System.out)
 
@@ -85,30 +90,58 @@ class GatherAssetsTask extends DefaultTask {
         TypeSpec.Builder builder = TypeSpec.classBuilder(name)
                 .addModifiers(PUBLIC, FINAL)
 
-        def constants = collectAssetList(assetTree)
-        CodeBlock array = CodeBlock.builder()
-                .add("{\"\$L\"}", constants.join("\", \""))
-                .build()
-
-        builder.addField(FieldSpec.builder(String[], "ALL")
-                .addModifiers(PUBLIC, STATIC, FINAL)
-                .initializer(array)
-                .build())
+        String[] fieldNames = []
 
         assetTree.each {
             if (!it.key || !it.value) return
             if (it.value in Map) {
-                def typeSpec = generateAssetsType(it.key, it.value)
+                def (typeSpec, subfields) = generateAssetsType(it.key, it.value)
                 builder.addType(typeSpec)
+
+                subfields = subfields.collect { "${typeSpec.name}.$it" }
+                fieldNames += subfields
             } else {
-                builder.addField(FieldSpec.builder(String, it.key.toUpperCase())
+                AssetMapping mapping = it.value
+                ClassName descriptorClassName = ClassName.get(AssetDescriptor)
+                ClassName assetClassName = ClassName.get(mapping.assetType)
+                TypeName descriptorType = ParameterizedTypeName.get(
+                        descriptorClassName,
+                        assetClassName);
+
+                def initializer = CodeBlock.builder()
+                        .add("new \$T<>(\$S, \$T.class", 
+                                descriptorClassName,
+                                relative(mapping.file),
+                                mapping.assetType)
+                if (mapping.paramType) {
+                    //ClassName paramClassName = ClassName.get(mapping.paramType)
+                    def parameters = ("\$L" * mapping.params.length).join(", ")
+                    initializer.add(", new \$T(", mapping.paramType)
+                            .add(parameters, mapping.params)
+                            .add(")")
+                }
+                initializer.add(")")
+
+                def field = FieldSpec.builder(descriptorType, mapping.fieldName.toUpperCase())
                         .addModifiers(PUBLIC, STATIC, FINAL)
-                        .initializer("\$S", it.value)
-                        .build())
+                        .initializer(initializer.build())
+                        .build()
+                builder.addField(field)
+                fieldNames += field.name
             }
         }
 
-        return builder.build()
+        //def constants = collectAssetList(assetTree)
+        //CodeBlock array = CodeBlock.builder()
+        //        .add("{\$N}", constants.join(", "))
+        //        .build()
+
+        builder.addField(FieldSpec.builder(String[], "ALL")
+                .addModifiers(PUBLIC, STATIC, FINAL)
+                .initializer("{" + (["\$N"] * fieldNames.length).join(", ") + "}", fieldNames)
+                .build())
+        
+        return [builder.build(), fieldNames]
     }
 
     protected def collectAssetList(Map assetTree) {
@@ -117,7 +150,7 @@ class GatherAssetsTask extends DefaultTask {
             if (it.value in Map) {
                 assets += collectAssetList(it.value)
             } else {
-                assets << it.value
+                assets << it.value.fieldName.toUpperCase()
             }
         }
         return assets
@@ -136,8 +169,7 @@ class GatherAssetsTask extends DefaultTask {
         dir.eachFile(FileType.FILES) {
             if (it.absolutePath in files) {
                 mapper.getAssets(it).each {
-                    println "Found asset $it"
-                    tree << it
+                    tree[it.fieldName] = it
                 }
             }
         }

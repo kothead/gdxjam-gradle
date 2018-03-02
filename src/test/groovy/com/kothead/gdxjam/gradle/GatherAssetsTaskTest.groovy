@@ -36,11 +36,18 @@ class GatherAssetsTaskTest extends Specification {
 
                     mappers {
                         "batch1/*" {
-                            [(filename(it)): relative(it)]
+                            asset {
+                                setFieldName filename(getFile())
+                                setAssetType com.badlogic.gdx.graphics.Texture
+                            }
                         }
-                        "batch2/*" {
-                            [(filename(it)): "VALUE_" + filename(it).toUpperCase()]
-                        }
+                        /*"batch2/*" {
+                            asset {
+                                fieldName "VALUE_" + filename(it)
+                                file it
+                                assetType com.badlogic.gdx.graphics.Texture
+                            }
+                        }*/
                     }
                 }
             """

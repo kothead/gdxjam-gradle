@@ -1,11 +1,15 @@
 package com.kothead.gdxjam.gradle
 
+import groovy.transform.Synchronized
+
 import org.gradle.util.Configurable
 
 class AssetMapper implements Configurable<AssetMapper> {
 
-    String name
-    Closure mapper
+    private String name
+    private Closure mapper
+    private List<AssetMapping> mappings 
+    private File file
 
     AssetMapper(String name) {
         this.name = name
@@ -13,42 +17,27 @@ class AssetMapper implements Configurable<AssetMapper> {
 
     AssetMapper configure(Closure closure) {
         mapper = closure 
+        mapper.delegate = this
         return this
     }
 
-    def getAssets(File file) {
-        if (!mapper) return []
-        toMap(mapper(file)).findAll { it.key && it.value }
+    def asset(Closure closure) {
+        AssetMapping mapping = new AssetMapping()
+        mapping.setFile(file)
+
+        closure.delegate = mapping
+        closure()
+        mappings << mapping
     }
 
-    private def toMap(asset) {
-        switch (asset) {
-            case Map:
-                println "it's a map"
-                return asset
+    @Synchronized
+    def getAssets(File file) {
+        this.file = file
+        if (!mapper) return []
 
-            case List:
-                println "it's a list"
-                return asset
-                        .collectEntries {[(it): it]};
-
-            case String[]:
-                println "it's an array"
-                return asset.toList()
-                        .collectEntries {[(it): it]};
-
-            case String:
-                println "it's a string"
-                return [(asset): asset] 
-
-            case true:
-                println "it's a plane"
-                return [(asset.name.take(asset.name.lastIndexOf('.'))): asset.path]
-
-            default:
-                println "nothin I know" 
-                return [:]
-        }
+        mappings = []
+        mapper(file)
+        return mappings
     }
 }
 
