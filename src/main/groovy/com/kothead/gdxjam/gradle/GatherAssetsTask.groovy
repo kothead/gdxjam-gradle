@@ -112,11 +112,8 @@ class GatherAssetsTask extends DefaultTask {
                                 relative(mapping.file),
                                 mapping.assetType)
                 if (mapping.paramType) {
-                    //ClassName paramClassName = ClassName.get(mapping.paramType)
-                    def parameters = ("\$L" * mapping.params.length).join(", ")
-                    initializer.add(", new \$T(", mapping.paramType)
-                            .add(parameters, mapping.params)
-                            .add(")")
+                    ClassName paramClassName = ClassName.get(mapping.paramType)
+                    initializer.add(", new \$T(\$L)", mapping.paramType, mapping.params)
                 }
                 initializer.add(")")
 

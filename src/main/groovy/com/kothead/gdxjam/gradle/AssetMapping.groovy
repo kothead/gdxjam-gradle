@@ -6,5 +6,5 @@ class AssetMapping {
     File file
     Class assetType
     Class paramType
-    List params
+    String params
 }

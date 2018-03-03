@@ -41,13 +41,14 @@ class GatherAssetsTaskTest extends Specification {
                                 setAssetType com.badlogic.gdx.graphics.Texture
                             }
                         }
-                        /*"batch2/*" {
+                        "batch2/*" {
                             asset {
-                                fieldName "VALUE_" + filename(it)
-                                file it
-                                assetType com.badlogic.gdx.graphics.Texture
+                                setFieldName "VALUE_" + filename(getFile())
+                                setAssetType com.badlogic.gdx.graphics.g2d.TextureAtlas
+                                setParamType com.badlogic.gdx.assets.loaders.TextureAtlasLoader.TextureAtlasParameter
+                                setParams "true"
                             }
-                        }*/
+                        }
                     }
                 }
             """
