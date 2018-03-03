@@ -3,6 +3,7 @@ package com.kothead.gdxjam.gradle
 import com.badlogic.gdx.tools.texturepacker.TexturePacker
 import com.badlogic.gdx.assets.AssetDescriptor
 
+import com.squareup.javapoet.ArrayTypeName
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
@@ -30,6 +31,8 @@ import static javax.lang.model.element.Modifier.FINAL
 
 class GatherAssetsTask extends DefaultTask {
 
+    protected static final String FIELD_ALL = "ALL"
+
     NamedDomainObjectContainer<AssetMapper> mappers = project.container(AssetMapper)
 
     @InputDirectory
@@ -56,7 +59,7 @@ class GatherAssetsTask extends DefaultTask {
             merge(tree, collectAssetTree(it, inputDir, files))
         }
         
-        def (TypeSpec spec) = generateAssetsType(assetsClass, tree)
+        TypeSpec spec = generateAssetsType(assetsClass, tree)
         JavaFile file = JavaFile.builder(assetsPackage, spec).build() 
         file.writeTo(System.out)
 
@@ -86,20 +89,15 @@ class GatherAssetsTask extends DefaultTask {
                 .toFile()
     }
 
-    protected def generateAssetsType(String name, Map assetTree) {
+    protected TypeSpec generateAssetsType(String name, Map assetTree) {
         TypeSpec.Builder builder = TypeSpec.classBuilder(name)
                 .addModifiers(PUBLIC, FINAL)
-
-        String[] fieldNames = []
 
         assetTree.each {
             if (!it.key || !it.value) return
             if (it.value in Map) {
-                def (typeSpec, subfields) = generateAssetsType(it.key, it.value)
-                builder.addType(typeSpec)
-
-                subfields = subfields.collect { "${typeSpec.name}.$it" }
-                fieldNames += subfields
+                builder.addType(generateAssetsType(it.key, it.value))
+                //subfields = subfields.collect { "${typeSpec.name}.$it" }
             } else {
                 AssetMapping mapping = it.value
                 ClassName descriptorClassName = ClassName.get(AssetDescriptor)
@@ -122,41 +120,73 @@ class GatherAssetsTask extends DefaultTask {
                 }
                 initializer.add(")")
 
-                def field = FieldSpec.builder(descriptorType, mapping.fieldName.toUpperCase())
+                builder.addField(FieldSpec.builder(descriptorType, mapping.fieldName.toUpperCase())
                         .addModifiers(PUBLIC, STATIC, FINAL)
                         .initializer(initializer.build())
-                        .build()
-                builder.addField(field)
-                fieldNames += field.name
+                        .build())
             }
         }
 
-        //def constants = collectAssetList(assetTree)
-        //CodeBlock array = CodeBlock.builder()
-        //        .add("{\$N}", constants.join(", "))
-        //        .build()
+        def prebuild = builder.build()
+        def all = collectAssetList(prebuild) 
+        if (all) {
+            all = toArrayInitializer(all as String[])
+            def type = ArrayTypeName.of(getCommonTypeName(prebuild))
 
-        builder.addField(FieldSpec.builder(String[], "ALL")
-                .addModifiers(PUBLIC, STATIC, FINAL)
-                .initializer("{" + (["\$N"] * fieldNames.length).join(", ") + "}", fieldNames)
-                .build())
-        
-        return [builder.build(), fieldNames]
+            builder.addField(FieldSpec.builder(type, FIELD_ALL)
+                    .addModifiers(PUBLIC, STATIC, FINAL)
+                    .initializer(all)
+                    .build())
+        }
+
+        builder.build()
     }
 
-    protected def collectAssetList(Map assetTree) {
+    private TypeName getCommonTypeName(TypeSpec typeSpec) {
+        def typeNames = []
+
+        typeSpec.fieldSpecs.each { 
+            typeNames << it.type
+        }
+
+        typeSpec.typeSpecs.each {
+            typeNames << it.fieldSpecs.find {
+                it.name == FIELD_ALL
+            }.type.componentType
+        }
+
+        return getCommon(typeNames, TypeName.get(AssetDescriptor))
+    }
+
+    private def getCommon(List values, def defaultValue) {
+        def common = values ? values[0] : defaultValue
+        for (value in values) {
+            if (value != common) return defaultValue
+        }
+        return common
+    }
+
+    protected List<String> collectAssetList(TypeSpec typeSpec) {
         def assets = []
-        assetTree.each {
-            if (it.value in Map) {
-                assets += collectAssetList(it.value)
-            } else {
-                assets << it.value.fieldName.toUpperCase()
-            }
+        typeSpec.fieldSpecs
+                .findAll { it.name != FIELD_ALL }
+                .each { assets << it.name }
+        typeSpec.typeSpecs.each {
+            def typeName = it.name
+            assets += collectAssetList(it).collect { "$typeName.$it" }
         }
         return assets
     }
 
-    protected def collectAssetTree(AssetMapper mapper, File dir, List files) {
+    private CodeBlock toArrayInitializer(String[] names) {
+        CodeBlock.builder()
+                .add("{")
+                .add((["\$N"] * names.length).join(", "), names)
+                .add("}")
+                .build()
+    }
+
+    protected Map collectAssetTree(AssetMapper mapper, File dir, List files) {
         def tree = [:]
 
         dir.eachDir {
@@ -177,7 +207,7 @@ class GatherAssetsTask extends DefaultTask {
         return tree
     }
 
-    protected def merge(Map first, Map second) {
+    protected Map merge(Map first, Map second) {
         second.each {
             def value = first[it.key]
             if (value in Map && it.value in Map) {
