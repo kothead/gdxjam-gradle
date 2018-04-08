@@ -2,8 +2,9 @@ import groovy.transform.Canonical
 
 @Canonical
 class AssetMapping {
-    String fieldName
     File file
+    String fieldName
+    String fileName
     Class assetType
     Class paramType
     String params

@@ -9,6 +9,8 @@ class AssetMapper implements Configurable<AssetMapper> {
     private String name
     private Closure mapper
     private List<AssetMapping> mappings 
+
+    private File inputDir
     private File file
 
     AssetMapper(String name) {
@@ -24,6 +26,10 @@ class AssetMapper implements Configurable<AssetMapper> {
     def asset(Closure closure) {
         AssetMapping mapping = new AssetMapping()
         mapping.setFile(file)
+        mapping.setFileName(inputDir
+                .toPath()
+                .relativize(file.toPath())
+                .toString())
 
         closure.delegate = mapping
         closure()
@@ -31,7 +37,8 @@ class AssetMapper implements Configurable<AssetMapper> {
     }
 
     @Synchronized
-    def getAssets(File file) {
+    def getAssets(File inputDir, File file) {
+        this.inputDir = inputDir
         this.file = file
         if (!mapper) return []
 

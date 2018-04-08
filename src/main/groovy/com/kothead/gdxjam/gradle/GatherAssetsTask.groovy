@@ -109,7 +109,7 @@ class GatherAssetsTask extends DefaultTask {
                 def initializer = CodeBlock.builder()
                         .add("new \$T<>(\$S, \$T.class", 
                                 descriptorClassName,
-                                relative(mapping.file),
+                                mapping.fileName,
                                 mapping.assetType)
                 if (mapping.paramType) {
                     ClassName paramClassName = ClassName.get(mapping.paramType)
@@ -195,7 +195,7 @@ class GatherAssetsTask extends DefaultTask {
 
         dir.eachFile(FileType.FILES) {
             if (it.absolutePath in files) {
-                mapper.getAssets(it).each {
+                mapper.getAssets(inputDir, it).each {
                     tree[it.fieldName] = it
                 }
             }
