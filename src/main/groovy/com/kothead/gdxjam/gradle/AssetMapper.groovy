@@ -23,6 +23,10 @@ class AssetMapper implements Configurable<AssetMapper> {
         return this
     }
 
+    def getFile() {
+        return file
+    }
+
     def asset(Closure closure) {
         AssetMapping mapping = new AssetMapping()
         mapping.setFile(file)
