@@ -91,7 +91,7 @@ class GatherAssetsTask extends DefaultTask {
 
     protected TypeSpec generateAssetsType(String name, Map assetTree) {
         TypeSpec.Builder builder = TypeSpec.classBuilder(name)
-                .addModifiers(PUBLIC, FINAL)
+                .addModifiers(PUBLIC, STATIC, FINAL)
 
         assetTree.each {
             if (!it.key || !it.value) return
