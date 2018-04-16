@@ -15,6 +15,8 @@ import com.squareup.javapoet.TypeName
 import groovy.io.FileType
 import groovy.util.FileNameFinder
 
+import javax.lang.model.element.Modifier
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectContainer
@@ -59,7 +61,7 @@ class GatherAssetsTask extends DefaultTask {
             merge(tree, collectAssetTree(it, inputDir, files))
         }
         
-        TypeSpec spec = generateAssetsType(assetsClass, tree)
+        TypeSpec spec = generateAssetsType(assetsClass, tree, PUBLIC, FINAL)
         JavaFile file = JavaFile.builder(assetsPackage, spec).build() 
         file.writeTo(System.out)
 
@@ -89,14 +91,14 @@ class GatherAssetsTask extends DefaultTask {
                 .toFile()
     }
 
-    protected TypeSpec generateAssetsType(String name, Map assetTree) {
+    protected TypeSpec generateAssetsType(String name, Map assetTree, Modifier... modifiers) {
         TypeSpec.Builder builder = TypeSpec.classBuilder(name)
-                .addModifiers(PUBLIC, STATIC, FINAL)
+                .addModifiers(modifiers)
 
         assetTree.each {
             if (!it.key || !it.value) return
             if (it.value in Map) {
-                builder.addType(generateAssetsType(it.key, it.value))
+                builder.addType(generateAssetsType(it.key, it.value, PUBLIC, STATIC, FINAL))
                 //subfields = subfields.collect { "${typeSpec.name}.$it" }
             } else {
                 AssetMapping mapping = it.value
