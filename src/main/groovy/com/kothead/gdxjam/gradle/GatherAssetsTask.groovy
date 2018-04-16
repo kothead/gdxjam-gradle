@@ -130,7 +130,7 @@ class GatherAssetsTask extends DefaultTask {
         def all = collectAssetList(prebuild) 
         if (all) {
             all = toArrayInitializer(all as String[])
-            def type = ArrayTypeName.of(getCommonTypeName(prebuild))
+            def type = ArrayTypeName.of(TypeName.get(AssetDescriptor))
 
             builder.addField(FieldSpec.builder(type, FIELD_ALL)
                     .addModifiers(PUBLIC, STATIC, FINAL)
