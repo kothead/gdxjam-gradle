@@ -107,8 +107,8 @@ class GatherAssetsTask extends DefaultTask {
                         assetClassName);
 
                 def initializer = CodeBlock.builder()
-                        .add("new \$T<>(\$S, \$T.class", 
-                                descriptorClassName,
+                        .add("new \$T(\$S, \$T.class", 
+                                descriptorType,
                                 mapping.fileName,
                                 mapping.assetType)
                 if (mapping.paramType) {
