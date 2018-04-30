@@ -22,7 +22,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.tasks.incremental.IncrementalTaskInputs
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
@@ -37,7 +37,7 @@ class GatherAssetsTask extends DefaultTask {
 
     NamedDomainObjectContainer<AssetMapper> mappers = project.container(AssetMapper)
 
-    @InputDirectory
+    @InputFiles
     File inputDir = new File('input')
 
     @Input
